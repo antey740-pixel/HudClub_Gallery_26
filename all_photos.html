@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Общая выставка</title>
+    <!-- Fancybox 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0a0a; color: #ddd; margin: 0; padding: 0; }
+        
+        .container { width: 98%; max-width: 1600px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
+        
+        .header-nav { 
+            position: sticky; top: 0; background: rgba(20, 20, 20, 0.95); 
+            backdrop-filter: blur(10px); border-bottom: 1px solid #333; 
+            z-index: 1000; padding: 15px 0; text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn { 
+            display: inline-block; color: #fff; text-decoration: none; background: #222; 
+            padding: 10px 25px; border-radius: 30px; margin: 0 5px; font-weight: 500;
+            border: 1px solid #444; transition: all 0.1s ease; font-size: 14px; cursor: pointer;
+        }
+        .btn:hover { background: #00d4ff; border-color: #00d4ff; color: #000; }
+        .btn-active { background: #ffcc00; color: #000; border: none; }
+        .btn-review {
+            background: #8b0000;
+            border-color: #ff4444;
+        }
+        .btn-review:hover {
+            background: #ff0000;
+            border-color: #ff0000;
+        }
+        .btn-review.active {
+            background: #ffcc00;
+            color: #000;
+            border-color: #ffcc00;
+        }
+
+        h1 { text-align: center; margin-top: 30px; color: #fff; font-weight: 300; }
+        h2 { color: #ffcc00; border-left: 4px solid #ffcc00; padding-left: 15px; margin: 40px 0 15px 0; font-size: 1.3rem; clear: both; }
+        
+        .user-list { list-style: none; padding: 0; margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .user-item { background: #161616; border-radius: 12px; border: 1px solid #222; transition: 0.1s; }
+        .user-item:hover { background: #222; border-color: #00d4ff; transform: translateX(5px); }
+        .user-link { display: flex; align-items: center; padding: 15px 20px; color: #00d4ff; text-decoration: none; font-size: 1.1rem; }
+        .list-num { background: #ffcc00; color: #000; font-weight: bold; width: 34px; height: 34px; 
+                     display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-right: 15px; flex-shrink: 0; }
+
+        .gallery { 
+            display: grid !important; 
+            grid-template-columns: repeat(auto-fit, 450px) !important; 
+            justify-content: center !important;
+            gap: 15px !important; 
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        .gallery-item { border-radius: 10px; overflow: hidden; border: 1px solid #222; background: #000; }
+        .gallery-item img { width: 100%; height: auto; display: block; cursor: pointer; transition: 0.2s; }
+        .gallery-item:hover img { opacity: 0.8; transform: scale(1.03); }
+
+        /* Canvas для рисования */
+        #review-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 99999; 
+            display: none; 
+            cursor: crosshair; 
+            touch-action: none;
+            background: transparent !important;
+            pointer-events: none;
+        }
+        #review-canvas.active {
+            display: block !important;
+            pointer-events: auto;
+            background: transparent !important;
+        }
+        
+        #review-tools { 
+            position: fixed; 
+            bottom: 30px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 100000; 
+            background: rgba(0,0,0,0.9); 
+            padding: 10px 25px; 
+            border-radius: 50px; 
+            display: none; 
+            gap: 15px; 
+            align-items: center; 
+            border: 2px solid #ffcc00; 
+        }
+        .color-dot { width: 25px; height: 25px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; }
+        .dot-white { background: #fff; } .dot-black { background: #000; } .dot-red { background: #f00; }
+        .btn-clear { background: #444; color: #fff; border: none; padding: 5px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; }
+        .btn-exit { background: #8b0000; border-color: #ff4444; }
+        .btn-exit:hover { background: #ff0000; }
+    </style>
+</head>
+<body>
+    <div class="header-nav">
+        <a href="index.html" class="btn ">🏠 ГЛАВНАЯ</a>
+        <a href="all_photos.html" class="btn btn-active">🖼️ ВСЕ ФОТО (ВЫСТАВКА)</a>
+        <button id="reviewToggleBtn" class="btn btn-review">✏️ РЕЖИМ РАЗБОРА</button>
+    </div>
+    <canvas id="review-canvas"></canvas>
+    <div id="review-tools">
+        <div class="color-dot dot-white" onclick="setStroke('#fff')"></div>
+        <div class="color-dot dot-black" onclick="setStroke('#000')"></div>
+        <div class="color-dot dot-red" onclick="setStroke('#f00')"></div>
+        <button class="btn-clear" onclick="clearCanvas()">ОЧИСТИТЬ</button>
+        <button class="btn-clear btn-exit" onclick="toggleReview()">ВЫЙТИ</button>
+        <span style="color:#ffcc00; font-size:11px; margin-left:10px;">РЕЖИМ РАЗБОРА</span>
+    </div>
+<div class="container">
+<h1>Общая выставка (все фото) 22 июля 2026 год #пленэррека</h1><h2>01. ieva</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1400016793/p_0.jpg" data-fancybox="all_club" data-caption="01. ieva"><img src="assets/user1400016793/p_0.jpg" loading="lazy"></a></div></div><h2>02. Мария Буракова</h2><div class='gallery'><div class="gallery-item"><a href="assets/user112888460/p_0.jpg" data-fancybox="all_club" data-caption="02. Мария Буракова"><img src="assets/user112888460/p_0.jpg" loading="lazy"></a></div></div><h2>03. Юлия</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1312293506/p_0.jpg" data-fancybox="all_club" data-caption="03. Юлия"><img src="assets/user1312293506/p_0.jpg" loading="lazy"></a></div></div><h2>04. Ольга Казанцева</h2><div class='gallery'><div class="gallery-item"><a href="assets/user706108351/p_0.jpg" data-fancybox="all_club" data-caption="04. Ольга Казанцева"><img src="assets/user706108351/p_0.jpg" loading="lazy"></a></div></div><h2>05. Наташа</h2><div class='gallery'><div class="gallery-item"><a href="assets/user630748018/p_0.jpg" data-fancybox="all_club" data-caption="05. Наташа"><img src="assets/user630748018/p_0.jpg" loading="lazy"></a></div></div><h2>09. Элла Афанасьева</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5579570771/p_0.jpg" data-fancybox="all_club" data-caption="09. Элла Афанасьева"><img src="assets/user5579570771/p_0.jpg" loading="lazy"></a></div></div><h2>10. Елена Богданова</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5154548151/p_0.jpg" data-fancybox="all_club" data-caption="10. Елена Богданова"><img src="assets/user5154548151/p_0.jpg" loading="lazy"></a></div><div class="gallery-item"><a href="assets/user5154548151/p_1.jpg" data-fancybox="all_club" data-caption="10. Елена Богданова"><img src="assets/user5154548151/p_1.jpg" loading="lazy"></a></div></div><h2>12. Татьяна Котлярова</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5951201810/p_0.jpg" data-fancybox="all_club" data-caption="12. Татьяна Котлярова"><img src="assets/user5951201810/p_0.jpg" loading="lazy"></a></div></div><h2>13. Елена Столбовая</h2><div class='gallery'><div class="gallery-item"><a href="assets/user7560934540/p_0.jpg" data-fancybox="all_club" data-caption="13. Елена Столбовая"><img src="assets/user7560934540/p_0.jpg" loading="lazy"></a></div></div><h2>14. Наталья</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1526498781/p_0.jpg" data-fancybox="all_club" data-caption="14. Наталья"><img src="assets/user1526498781/p_0.jpg" loading="lazy"></a></div></div><h2>15. Ольга Л</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1271076025/p_0.jpg" data-fancybox="all_club" data-caption="15. Ольга Л"><img src="assets/user1271076025/p_0.jpg" loading="lazy"></a></div></div><h2>17. Мария Корнеева</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5283328040/p_0.jpg" data-fancybox="all_club" data-caption="17. Мария Корнеева"><img src="assets/user5283328040/p_0.jpg" loading="lazy"></a></div></div><h2>18. Ольга Никитина</h2><div class='gallery'><div class="gallery-item"><a href="assets/user416091017/p_0.jpg" data-fancybox="all_club" data-caption="18. Ольга Никитина"><img src="assets/user416091017/p_0.jpg" loading="lazy"></a></div></div><h2>20. In The Shadows</h2><div class='gallery'><div class="gallery-item"><a href="assets/user6554428600/p_0.jpg" data-fancybox="all_club" data-caption="20. In The Shadows"><img src="assets/user6554428600/p_0.jpg" loading="lazy"></a></div></div><h2>21. 🍂</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1430643364/p_0.jpg" data-fancybox="all_club" data-caption="21. 🍂"><img src="assets/user1430643364/p_0.jpg" loading="lazy"></a></div></div><h2>22. Наталья К.</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5036278950/p_0.jpg" data-fancybox="all_club" data-caption="22. Наталья К."><img src="assets/user5036278950/p_0.jpg" loading="lazy"></a></div></div><h2>24. Наталья</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5696038411/p_0.jpg" data-fancybox="all_club" data-caption="24. Наталья"><img src="assets/user5696038411/p_0.jpg" loading="lazy"></a></div></div><h2>27. ЁжкинаКошка.</h2><div class='gallery'><div class="gallery-item"><a href="assets/user6790815942/p_0.jpg" data-fancybox="all_club" data-caption="27. ЁжкинаКошка."><img src="assets/user6790815942/p_0.jpg" loading="lazy"></a></div></div><h2>28. Евгения Е</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1077623186/p_0.jpg" data-fancybox="all_club" data-caption="28. Евгения Е"><img src="assets/user1077623186/p_0.jpg" loading="lazy"></a></div></div><h2>29. Ольга Кузьмич</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5338590405/p_0.jpg" data-fancybox="all_club" data-caption="29. Ольга Кузьмич"><img src="assets/user5338590405/p_0.jpg" loading="lazy"></a></div></div><h2>30. Svetlana L</h2><div class='gallery'><div class="gallery-item"><a href="assets/user860124815/p_0.jpg" data-fancybox="all_club" data-caption="30. Svetlana L"><img src="assets/user860124815/p_0.jpg" loading="lazy"></a></div></div><h2>31. Светлана</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1463516631/p_0.jpg" data-fancybox="all_club" data-caption="31. Светлана"><img src="assets/user1463516631/p_0.jpg" loading="lazy"></a></div></div><h2>32. Алина Ю</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1484415865/p_0.jpg" data-fancybox="all_club" data-caption="32. Алина Ю"><img src="assets/user1484415865/p_0.jpg" loading="lazy"></a></div></div><h2>34. Ирина</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1172637697/p_0.jpg" data-fancybox="all_club" data-caption="34. Ирина"><img src="assets/user1172637697/p_0.jpg" loading="lazy"></a></div></div><h2>35. Ирина</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1010289715/p_0.jpg" data-fancybox="all_club" data-caption="35. Ирина"><img src="assets/user1010289715/p_0.jpg" loading="lazy"></a></div></div><h2>36. Онипко Людмила</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1647516919/p_0.jpg" data-fancybox="all_club" data-caption="36. Онипко Людмила"><img src="assets/user1647516919/p_0.jpg" loading="lazy"></a></div></div><h2>40. Татьяна Семченкова</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1064782066/p_0.jpg" data-fancybox="all_club" data-caption="40. Татьяна Семченкова"><img src="assets/user1064782066/p_0.jpg" loading="lazy"></a></div></div><h2>42. Ирина Зубленко Ирина Зубленко</h2><div class='gallery'><div class="gallery-item"><a href="assets/user838231987/p_0.jpg" data-fancybox="all_club" data-caption="42. Ирина Зубленко Ирина Зубленко"><img src="assets/user838231987/p_0.jpg" loading="lazy"></a></div></div><h2>45. Наталья Крупицкая</h2><div class='gallery'><div class="gallery-item"><a href="assets/user7757390094/p_0.jpg" data-fancybox="all_club" data-caption="45. Наталья Крупицкая"><img src="assets/user7757390094/p_0.jpg" loading="lazy"></a></div></div><h2>46. Людмила</h2><div class='gallery'><div class="gallery-item"><a href="assets/user5683728772/p_0.jpg" data-fancybox="all_club" data-caption="46. Людмила"><img src="assets/user5683728772/p_0.jpg" loading="lazy"></a></div></div><h2>48. Нюргуяна Павлова</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1420327365/p_0.jpg" data-fancybox="all_club" data-caption="48. Нюргуяна Павлова"><img src="assets/user1420327365/p_0.jpg" loading="lazy"></a></div></div><h2>49. Lana</h2><div class='gallery'><div class="gallery-item"><a href="assets/user480099990/p_0.jpg" data-fancybox="all_club" data-caption="49. Lana"><img src="assets/user480099990/p_0.jpg" loading="lazy"></a></div></div><h2>51. Евгения</h2><div class='gallery'><div class="gallery-item"><a href="assets/user803533213/p_0.jpg" data-fancybox="all_club" data-caption="51. Евгения"><img src="assets/user803533213/p_0.jpg" loading="lazy"></a></div></div><h2>52. Ilya</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1621738/p_0.jpg" data-fancybox="all_club" data-caption="52. Ilya"><img src="assets/user1621738/p_0.jpg" loading="lazy"></a></div></div><h2>53. Юлия Николаева</h2><div class='gallery'><div class="gallery-item"><a href="assets/user1066336768/p_0.jpg" data-fancybox="all_club" data-caption="53. Юлия Николаева"><img src="assets/user1066336768/p_0.jpg" loading="lazy"></a></div></div>
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+    <script>
+        const canvas = document.getElementById('review-canvas');
+        const ctx = canvas.getContext('2d');
+        const tools = document.getElementById('review-tools');
+        const toggleBtn = document.getElementById('reviewToggleBtn');
+        let isDrawing = false;
+        let active = false;
+
+        function setStroke(c) { ctx.strokeStyle = c; }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        function toggleReview() {
+            active = !active;
+            if (active) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#ff0000';
+                canvas.classList.add('active');
+                tools.style.display = 'flex';
+                toggleBtn.classList.add('active');
+                toggleBtn.textContent = '✏️ РЕЖИМ РАЗБОРА (ВКЛ)';
+            } else {
+                canvas.classList.remove('active');
+                tools.style.display = 'none';
+                toggleBtn.classList.remove('active');
+                toggleBtn.textContent = '✏️ РЕЖИМ РАЗБОРА';
+            }
+        }
+
+        toggleBtn.addEventListener('click', toggleReview);
+
+        // Рисование мышью
+        canvas.addEventListener('mousedown', function(e) {
+            if (!active) return;
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.clientX, e.clientY);
+        });
+        canvas.addEventListener('mousemove', function(e) {
+            if (!active || !isDrawing) return;
+            ctx.lineTo(e.clientX, e.clientY);
+            ctx.stroke();
+        });
+        canvas.addEventListener('mouseup', function() {
+            isDrawing = false;
+        });
+        // Для касаний на мобильных
+        canvas.addEventListener('touchstart', function(e) {
+            if (!active) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(touch.clientX, touch.clientY);
+        });
+        canvas.addEventListener('touchmove', function(e) {
+            if (!active || !isDrawing) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            ctx.lineTo(touch.clientX, touch.clientY);
+            ctx.stroke();
+        });
+        canvas.addEventListener('touchend', function() {
+            isDrawing = false;
+        });
+
+        // Инициализация Fancybox
+        Fancybox.bind('[data-fancybox]', {
+            Carousel: { infinite: false },
+            on: {
+                closing: function() { 
+                    if (active) toggleReview(); 
+                    clearCanvas(); 
+                },
+                'Carousel.change': function() { 
+                    clearCanvas(); 
+                }
+            }
+        });
+    </script>
+</body>
+</html>
